@@ -1,11 +1,37 @@
 let clientSocket = io();
 
+clientSocket.on("connect", newConnection);
+clientSocket.on("mouseBroadcast", newBroadcast);
+
+function newConnection() {
+  console.log(clientSocket.id);
+}
+
+var sideX;
+var sideY;
+
+function newBroadcast(data) {
+  sideX = data.x;
+  sideY = data.y;
+  console.log(sideX, sideY);
+}
+
 var particle;
 let lines = [];
 
+function mouseMoved() {
+  let message = {
+    x: mouseX,
+    y: mouseY,
+  };
+  clientSocket.emit("mouse", message);
+}
+
 function setup() {
   createCanvas(windowWidth, windowHeight);
+
   particle = new Particle(100, 100);
+  sideP = new sideParticle(100, 100);
 }
 
 function draw() {
@@ -13,6 +39,9 @@ function draw() {
 
   particle.update();
   particle.show();
+
+  sideP.update();
+  sideP.show();
   for (let i = 0; i < lines.length; i++) {
     lines[i].show();
     lines[i].update();
@@ -61,6 +90,45 @@ function Particle(x, y) {
       push();
       noStroke();
       fill(random(50));
+      ellipse(pos.x, pos.y, i * 5, i * 5);
+      pop();
+    }
+  };
+}
+
+function sideParticle(x, y) {
+  this.x = x;
+  this.y = y;
+  this.history = [];
+  this.lineHistory = [];
+  this.sWidth = 100;
+
+  this.update = function () {
+    this.sWidth -= 1;
+
+    this.x += random(-10, 10);
+    this.y += random(-10, 10);
+    if (this.sWidth < -100) {
+      this.sWidth = 100;
+    }
+
+    var v = createVector(sideX, sideY);
+    this.history.push(v);
+    this.lineHistory.push(v);
+    if (this.history.length > 5) {
+      this.history.splice(0, 1);
+    }
+    if (this.lineHistory.length > 150) {
+      this.lineHistory.splice(0, 1);
+    }
+  };
+  this.show = function () {
+    for (var i = 0; i < this.history.length; i++) {
+      var pos = this.history[i];
+      var scale = this.history.length;
+      push();
+      strokeWeight(2);
+      noFill();
       ellipse(pos.x, pos.y, i * 5, i * 5);
       pop();
     }
