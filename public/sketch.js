@@ -1,3 +1,5 @@
+let clientSocket = io();
+
 var particle;
 let lines = [];
 
@@ -26,9 +28,6 @@ function mouseReleased() {
   lines.splice(0, 1);
 }
 
-// function mouseDragged() {
-//   lines[i].paintLine();
-// }
 function Particle(x, y) {
   this.x = x;
   this.y = y;
