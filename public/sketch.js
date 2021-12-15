@@ -2,6 +2,7 @@ let clientSocket = io();
 
 clientSocket.on("connect", newConnection);
 clientSocket.on("mouseBroadcast", newBroadcast);
+clientSocket.on("targetBroadcast", newTarget);
 
 function newConnection() {
   console.log(clientSocket.id);
@@ -9,15 +10,36 @@ function newConnection() {
 
 var sideX;
 var sideY;
-
+let targetballpos = {
+  x: 0,
+  y: 0,
+};
 function newBroadcast(data) {
   sideX = data.x;
   sideY = data.y;
-  console.log(sideX, sideY);
+  // console.log(sideX, sideY);
 }
 
+function newTarget(targetData) {
+  // console.log(targetData.x, targetData.y);
+  // let tempX
+  // let tempY
+  // tempX = targetData.x
+  // targetballpos.x;
+  // tempY=targetData.y
+  setTarget(targetData.x, targetData.y);
+  console.log(targetballpos.x, targetballpos.y);
+}
+
+var ballX;
+var ballY;
 var particle;
 let lines = [];
+
+let ballpos = {
+  x: 0,
+  y: 0,
+};
 
 function mouseMoved() {
   let message = {
@@ -36,7 +58,15 @@ function setup() {
 
 function draw() {
   background(200);
-
+  fill(0, 20);
+  rect(0, 0, width, height);
+  push();
+  noStroke();
+  fill("white");
+  circle(ballpos.x, ballpos.y, 20);
+  ballpos.x += 0.1 * (targetballpos.x - ballpos.x);
+  ballpos.y += 0.1 * (targetballpos.y - ballpos.y);
+  pop();
   particle.update();
   particle.show();
 
@@ -46,15 +76,16 @@ function draw() {
     lines[i].show();
     lines[i].update();
   }
+  if (lines.length > 1) {
+    lines.splice(0, 1);
+  }
 }
 
 function mouseClicked() {
-  lines.push(new Line(mouseX, mouseY));
-}
-function keyPressed() {}
-
-function mouseReleased() {
-  lines.splice(0, 1);
+  setTarget(mouseX, mouseY);
+  lines.push(new Line(targetballpos.x, targetballpos.y));
+  // console.log(targetballpos);
+  clientSocket.emit("target", targetballpos);
 }
 
 function Particle(x, y) {
@@ -145,7 +176,7 @@ class Line {
     this.x += random(-10, 10);
     this.y += random(-10, 10);
 
-    let v = createVector(mouseX, mouseY);
+    let v = createVector(targetballpos.x, targetballpos.y); //or targetballpos
     this.lineHistory.push(v);
 
     if (this.lineHistory.length > 100) {
@@ -165,9 +196,19 @@ class Line {
     endShape();
   }
 
+  mouseClicked() {
+    stroke("red");
+  }
   paintLine() {
     strokeWeight(10);
 
     line(mouseX, mouseY, pmouseX, pmouseY);
   }
+}
+
+function setTarget(targetx, targety) {
+  targetballpos = {
+    x: targetx,
+    y: targety,
+  };
 }
